@@ -12,13 +12,17 @@ const gulp = require('gulp'),
 	imagemin = require('gulp-imagemin'),
 	browserSync = require('browser-sync').create(),
 	dependents = require('gulp-dependents'),
-	src_folder = './src/',
-	src_assets_folder = src_folder + 'assets/',
-	dist_folder = './dist/',
-	dist_assets_folder = dist_folder + 'assets/',
-	node_modules_folder = './node_modules/',
-	dist_node_modules_folder = dist_folder + 'node_modules/',
-	node_dependencies = Object.keys(require('./package.json').dependencies || {})
+	purgecss = require('gulp-purgecss')
+
+;(src_folder = './src/'),
+	(src_assets_folder = src_folder + 'assets/'),
+	(dist_folder = './dist/'),
+	(dist_assets_folder = dist_folder + 'assets/'),
+	(node_modules_folder = './node_modules/'),
+	(dist_node_modules_folder = dist_folder + 'node_modules/'),
+	(node_dependencies = Object.keys(
+		require('./package.json').dependencies || {}
+	))
 
 gulp.task('clear', () => del([dist_folder]))
 
@@ -52,6 +56,17 @@ gulp.task('sass', () => {
 		.pipe(sourcemaps.write('.'))
 		.pipe(gulp.dest(dist_assets_folder + 'css'))
 		.pipe(browserSync.stream())
+})
+
+gulp.task('purgecss', () => {
+	return gulp
+		.src('dist/**/*.css')
+		.pipe(
+			purgecss({
+				content: ['src/**/*.html']
+			})
+		)
+		.pipe(gulp.dest('dist'))
 })
 
 gulp.task('js', () => {
@@ -121,7 +136,16 @@ gulp.task('vendor', () => {
 
 gulp.task(
 	'build',
-	gulp.series('clear', 'html', 'sass', 'js', 'images', 'fonts', 'vendor')
+	gulp.series(
+		'clear',
+		'html',
+		'sass',
+		'js',
+		'images',
+		'fonts',
+		'vendor',
+		'purgecss'
+	)
 )
 
 gulp.task('dev', gulp.series('html', 'sass', 'js', 'fonts'))
